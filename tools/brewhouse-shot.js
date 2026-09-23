@@ -1,6 +1,6 @@
 // node tools/brewhouse-shot.js <out.png> - opens the public Brewhouse phone app in a throwaway
 // headless browser, presses "Sync card data" (Riftbound, the default game) and captures the browser.
-const puppeteer = require(process.env.PUPPETEER || '/var/home/beef/Desktop/round-zero/tests/node_modules/puppeteer-core');
+const puppeteer = require(process.env.PUPPETEER || '/var/home/beef/Desktop/turn zero/tests/node_modules/puppeteer-core');
 const CHROME = process.env.CHROME || '/home/beef/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell';
 (async () => {
   const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'shell', args: ['--no-sandbox'] });

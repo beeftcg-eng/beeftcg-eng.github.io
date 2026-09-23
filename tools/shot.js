@@ -1,8 +1,8 @@
 // Headless screenshot: node tools/shot.js <url> <out.png> [width] [height] [waitMs]
 // Env: LS='{"key":"value"}' seeds localStorage before the page loads; FAKE_CONFIG=<file> serves that
 // file as /config.js on 127.0.0.1 (used for Pairings' demo data) and blocks the service worker.
-// Needs puppeteer-core (from ../round-zero/tests) and Playwright's chrome-headless-shell.
-const puppeteer = require(process.env.PUPPETEER || '/var/home/beef/Desktop/round-zero/tests/node_modules/puppeteer-core');
+// Needs puppeteer-core (from ~/Desktop/turn zero/tests) and Playwright's chrome-headless-shell.
+const puppeteer = require(process.env.PUPPETEER || '/var/home/beef/Desktop/turn zero/tests/node_modules/puppeteer-core');
 const CHROME = process.env.CHROME || '/home/beef/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell';
 (async () => {
   const [url, out, w = '420', h = '860', wait = '2500'] = process.argv.slice(2);
