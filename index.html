@@ -225,54 +225,43 @@
   .links a.primary { background: var(--accent); color: var(--sheet); }
   .links a:hover { background: var(--accent); color: var(--sheet); }
 
-  /* the specimen: a small, real-looking piece of each app */
+  /* the specimen: a real screenshot of each app */
   .specimen {
+    margin: 0;
     background: color-mix(in srgb, var(--accent) 9%, var(--sheet));
     border-left: 1px solid var(--rule);
     padding: clamp(22px, 3vw, 32px);
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 14px;
-    font-family: var(--mono);
+    align-items: center;
+    gap: 12px;
   }
-  .specimen .cap { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
-  .screen {
-    background: var(--sheet);
+  .shot img {
+    display: block;
+    max-width: 100%;
+    height: auto;
     border: 1px solid var(--rule);
-    border-radius: 12px;
-    padding: 16px;
-    font-size: 13px;
-    display: grid;
-    gap: 10px;
+    border-radius: 10px;
+    background: var(--sheet);
+    box-shadow: 0 14px 30px -18px rgba(0, 0, 0, .55);
   }
-  .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
-  .dim { color: var(--ink-soft); }
-  .tabular { font-variant-numeric: tabular-nums; }
-
-  .clock { font: 600 clamp(46px, 7vw, 64px)/1 var(--mono); letter-spacing: -.02em; color: var(--accent); text-align: center; font-variant-numeric: tabular-nums; }
-  .code { display: flex; gap: 6px; justify-content: center; }
-  .code span { width: 34px; height: 40px; display: grid; place-items: center; border: 1.5px solid var(--accent); border-radius: 6px; font-weight: 600; font-size: 18px; color: var(--accent); }
-
-  .rec { font: 600 34px/1 var(--mono); color: var(--accent); font-variant-numeric: tabular-nums; }
-  .bar { height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; }
-  .bar i { display: block; height: 100%; background: var(--accent); }
-  .pips { display: flex; gap: 4px; }
-  .pips b { width: 22px; height: 22px; border-radius: 5px; display: grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--sheet); }
-  .pips .w { background: var(--accent); }
-  .pips .l { background: var(--ink-soft); }
-
-  .zonelist { display: grid; gap: 6px; }
-  .zonelist .row span:last-child { font-weight: 600; }
-  .legal { color: var(--pairings); font-weight: 600; }
-
-  .check { display: grid; gap: 7px; }
-  .check label { display: flex; gap: 8px; align-items: center; }
-  .box { width: 15px; height: 15px; border: 1.5px solid var(--accent); border-radius: 4px; flex: none; display: grid; place-items: center; font-size: 11px; color: var(--sheet); }
-  .box.on { background: var(--accent); }
-  .done { text-decoration: line-through; color: var(--ink-soft); }
-  .xp { display: flex; align-items: center; gap: 10px; }
-  .xp .bar { flex: 1; }
+  /* phone screenshots: a phone-width window onto the top of the screen */
+  .shot.phone img {
+    width: min(100%, 250px);
+    aspect-ratio: 720 / 1100;
+    object-fit: cover;
+    object-position: top;
+    border-radius: 18px;
+  }
+  .shot.wide img { width: 100%; }
+  .shot figcaption {
+    font: 500 11px/1.3 var(--mono);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-align: center;
+  }
 
   /* ---------- how they connect ---------- */
   .links-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
@@ -353,16 +342,10 @@
           <a href="https://github.com/beeftcg-eng/Pairings" target="_blank" rel="noopener">Source</a>
         </div>
       </div>
-      <div class="specimen" aria-hidden="true">
-        <div class="cap">Example · a logged event</div>
-        <div class="screen">
-          <div class="row"><span>Store Championship</span><span class="dim">Riftbound</span></div>
-          <div class="row"><span class="rec">4-1</span><span>2nd place</span></div>
-          <div class="pips"><b class="w">W</b><b class="w">W</b><b class="l">L</b><b class="w">W</b><b class="w">W</b></div>
-          <div class="row dim"><span>Deck win rate, 6 events</span><span class="tabular">71%</span></div>
-          <div class="bar"><i style="width:71%"></i></div>
-        </div>
-      </div>
+      <figure class="specimen shot phone">
+        <img src="img/pairings.webp" width="720" height="1474" alt="Pairings on a phone: an upcoming-event countdown and event cards with Going, Log result and round-timer links" loading="lazy" decoding="async">
+        <figcaption>Screenshot · demo data</figcaption>
+      </figure>
     </article>
 
     <!-- 002 TurnZero -->
@@ -382,20 +365,16 @@
           <a href="https://github.com/beeftcg-eng/round-zero" target="_blank" rel="noopener">Source</a>
         </div>
       </div>
-      <div class="specimen" aria-hidden="true">
-        <div class="cap">Example · round 3 on the store TV</div>
-        <div class="screen">
-          <div class="clock">42:17</div>
-          <div class="row dim"><span>Join code</span><span>Push alerts on</span></div>
-          <div class="code"><span>K</span><span>7</span><span>Q</span><span>2</span></div>
-        </div>
-      </div>
+      <figure class="specimen shot phone">
+        <img src="img/turnzero.webp" width="720" height="1474" alt="TurnZero home screen: create a round timer with game presets for Riftbound, One Piece, Yu-Gi-Oh!, Pokémon and Magic" loading="lazy" decoding="async">
+        <figcaption>Screenshot · live site</figcaption>
+      </figure>
     </article>
 
     <!-- 003 Brewhouse -->
     <article class="entry bh" id="brewhouse">
       <div class="text">
-        <div class="meta"><span class="num">003 / 004</span><span>Desktop + phone</span><span>v0.13.0</span><span>Since Sep 15</span></div>
+        <div class="meta"><span class="num">003 / 004</span><span>Desktop + phone</span><span>v0.13.1</span><span>Since Sep 15</span></div>
         <h3>Beef's Brewhouse</h3>
         <p class="pitch">A deckbuilder for five games: Riftbound, One Piece, Pokémon, Magic: The Gathering and Yu-Gi-Oh!. It has card images, legality checking against each game's real format rules, and your collection built in.</p>
         <ul>
@@ -411,19 +390,10 @@
           <a href="https://github.com/beeftcg-eng/deckbuilder" target="_blank" rel="noopener">Source</a>
         </div>
       </div>
-      <div class="specimen" aria-hidden="true">
-        <div class="cap">Example · a Riftbound deck</div>
-        <div class="screen">
-          <div class="row"><span>Jinx Aggro</span><span class="legal">✓ Legal</span></div>
-          <div class="zonelist tabular">
-            <div class="row"><span class="dim">Legend</span><span>1</span></div>
-            <div class="row"><span class="dim">Main Deck</span><span>40</span></div>
-            <div class="row"><span class="dim">Battlefields</span><span>3</span></div>
-            <div class="row"><span class="dim">Runes</span><span>12</span></div>
-          </div>
-          <div class="row"><span>🏆 12-5 · 71% wins</span><span class="dim">own 52/56</span></div>
-        </div>
-      </div>
+      <figure class="specimen shot wide">
+        <img src="img/brewhouse.webp" width="1400" height="1191" alt="Beef's Brewhouse card browser showing Riftbound cards with deck and collection steppers" loading="lazy" decoding="async">
+        <figcaption>Screenshot · phone app, real Riftbound card data</figcaption>
+      </figure>
     </article>
 
     <!-- 004 Pawmodoro -->
@@ -445,18 +415,10 @@
           <a href="https://github.com/beeftcg-eng/pawmodoro" target="_blank" rel="noopener">Source</a>
         </div>
       </div>
-      <div class="specimen" aria-hidden="true">
-        <div class="cap">Example · work session 3 of 4</div>
-        <div class="screen">
-          <div class="clock">25:00</div>
-          <div class="check">
-            <label><span class="box on">✓</span><span class="done">Walk the dogs</span></label>
-            <label><span class="box"></span><span>Sleeve the new deck</span></label>
-            <label><span class="box"></span><span>Take out the trash · Thu</span></label>
-          </div>
-          <div class="xp"><span>Lv 14</span><div class="bar"><i style="width:62%"></i></div><span class="dim tabular">620 XP</span></div>
-        </div>
-      </div>
+      <figure class="specimen shot wide">
+        <img src="img/pawmodoro.webp" width="1100" height="700" alt="Pawmodoro on the desktop: lined-paper notes beside a recurring checklist, with the player bar below" loading="lazy" decoding="async">
+        <figcaption>Screenshot · example notes and tasks</figcaption>
+      </figure>
     </article>
   </div>
 
