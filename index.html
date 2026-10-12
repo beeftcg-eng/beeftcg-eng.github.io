@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Beef's Workshop</title>
-<meta name="description" content="Beef's shipped apps for trading card game players: Pairings, TurnZero, Beef's Brewhouse and Pawmodoro.">
+<meta name="description" content="Beef's shipped apps for trading card game and tabletop players: Pairings, TurnZero, Beef's Brewhouse, Pawmodoro and Dungeons Desk.">
 <meta property="og:title" content="Beef's Workshop">
-<meta property="og:description" content="Tools for the table: a tournament tracker, a deckbuilder, a round timer and a pomodoro app.">
+<meta property="og:description" content="Tools for the table: a tournament tracker, a deckbuilder, a round timer, a pomodoro app and a desk for Dungeon Masters.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://beeftcg-eng.github.io/">
 <meta name="theme-color" content="#1d4a3a">
@@ -30,6 +30,7 @@
     --pairings: #11807a;
     --brewhouse: #b3690e;
     --pawmodoro: #6c4f9e;
+    --dungeons: #3b5fa8;
     --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
     --body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -49,6 +50,7 @@
       --pairings: #4cc3bb;
       --brewhouse: #eba44a;
       --pawmodoro: #b59ae6;
+    --dungeons: #8fb0ef;
     }
   }
   :root[data-theme="dark"] {
@@ -65,6 +67,7 @@
     --pairings: #4cc3bb;
     --brewhouse: #eba44a;
     --pawmodoro: #b59ae6;
+    --dungeons: #8fb0ef;
   }
 
   * { box-sizing: border-box; }
@@ -138,7 +141,7 @@
   .zones {
     margin-top: 34px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
   }
   .zone {
@@ -186,6 +189,7 @@
   .entry.pr { --accent: var(--pairings); }
   .entry.bh { --accent: var(--brewhouse); }
   .entry.pm { --accent: var(--pawmodoro); }
+  .entry.dd { --accent: var(--dungeons); }
   .entry .text { padding: clamp(22px, 3.2vw, 34px); display: flex; flex-direction: column; gap: 14px; }
   .meta {
     display: flex;
@@ -268,7 +272,7 @@
   .link-card { padding: 20px; border-radius: 12px; background: var(--sheet); border: 1px solid var(--rule); display: flex; flex-direction: column; gap: 10px; }
   .pair { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--display); font-weight: 800; font-stretch: 112%; font-size: 18px; }
   .pair .arrow { font-family: var(--mono); font-weight: 500; color: var(--ink-soft); font-size: 15px; }
-  .c-tz { color: var(--turnzero); } .c-pr { color: var(--pairings); } .c-bh { color: var(--brewhouse); } .c-pm { color: var(--pawmodoro); }
+  .c-tz { color: var(--turnzero); } .c-pr { color: var(--pairings); } .c-bh { color: var(--brewhouse); } .c-pm { color: var(--pawmodoro); } .c-dd { color: var(--dungeons); }
   .link-card p { margin: 0; color: var(--ink-soft); font-size: 15px; }
 
   /* ---------- habits ---------- */
@@ -307,14 +311,15 @@
     <h1>Tools for the <span class="foil">table.</span></h1>
     <p class="lede">
       I build software for trading card game players: a tournament tracker, a deckbuilder, and a round timer for judges.
-      There's also a pomodoro app, for getting everything else done. All four are shipping and in use,
-      and they were built between August&nbsp;30 and September&nbsp;23, 2026.
+      There's also a pomodoro app, for getting everything else done, and a desk for Dungeon Masters. All five are shipping
+      and in use, and they were built between August&nbsp;30 and October&nbsp;10, 2026.
     </p>
     <nav class="zones" aria-label="Projects">
       <a class="zone" href="#pairings"><span class="no">001 · Web</span><b>Pairings</b><span>Tournament tracker</span></a>
       <a class="zone" href="#turnzero"><span class="no">002 · Web</span><b>TurnZero</b><span>Shared round timer</span></a>
       <a class="zone" href="#brewhouse"><span class="no">003 · Desktop + phone</span><b>Beef's Brewhouse</b><span>Deckbuilder</span></a>
       <a class="zone" href="#pawmodoro"><span class="no">004 · Desktop + phone</span><b>Pawmodoro</b><span>Focus &amp; to-dos</span></a>
+      <a class="zone" href="#dungeonsdesk"><span class="no">005 · Desktop + phone</span><b>Dungeons Desk</b><span>D&amp;D toolkit</span></a>
     </nav>
   </header>
 
@@ -327,11 +332,12 @@
     <!-- 001 Pairings -->
     <article class="entry pr" id="pairings">
       <div class="text">
-        <div class="meta"><span class="num">001 / 004</span><span>Progressive web app</span><span>v1.14.1</span><span>Since Aug 30</span></div>
+        <div class="meta"><span class="num">001 / 005</span><span>Progressive web app</span><span>v1.34.0</span><span>Since Aug 30</span></div>
         <h3>Pairings</h3>
         <p class="pitch">A tracker for local TCG tournaments. It keeps your events, your results round by round, and your decks in one place, and it tells your friends where you're playing next.</p>
         <ul>
           <li><strong>Stats that answer real questions:</strong> win rate by deck and by month, the matchups you beat and the ones you lose to, and streaks.</li>
+          <li><strong>Runs the tournament too:</strong> Swiss pairings with real tiebreakers, a top cut, results reported from players' phones, and store seasons with a public leaderboard.</li>
           <li><strong>Social:</strong> friends, playgroups, store pages with QR check-in, shareable event links, and push notifications when friends are going.</li>
           <li><strong>Works offline:</strong> edits queue up and merge per item when you're back online, so another device's changes are never overwritten.</li>
           <li><strong>Fully bilingual</strong> (English and Spanish), with automated checks for missing translations and for color contrast.</li>
@@ -351,7 +357,7 @@
     <!-- 002 TurnZero -->
     <article class="entry tz" id="turnzero">
       <div class="text">
-        <div class="meta"><span class="num">002 / 004</span><span>Web app</span><span>v2.1.0</span><span>Since Sep 7</span></div>
+        <div class="meta"><span class="num">002 / 005</span><span>Web app</span><span>v2.1.0</span><span>Since Sep 7</span></div>
         <h3>TurnZero</h3>
         <p class="pitch">A shared round timer for TCG events. The judge controls the clock, and every player sees it live on their phone or on the store's TV.</p>
         <ul>
@@ -374,7 +380,7 @@
     <!-- 003 Brewhouse -->
     <article class="entry bh" id="brewhouse">
       <div class="text">
-        <div class="meta"><span class="num">003 / 004</span><span>Desktop + phone</span><span>v0.18.1</span><span>Since Sep 15</span></div>
+        <div class="meta"><span class="num">003 / 005</span><span>Desktop + phone</span><span>v0.47.0</span><span>Since Sep 15</span></div>
         <h3>Beef's Brewhouse</h3>
         <p class="pitch">A deckbuilder for five games: Riftbound, One Piece, Pokémon, Magic: The Gathering and Yu-Gi-Oh!. It has card images, legality checking against each game's real format rules, and your collection built in.</p>
         <ul>
@@ -383,7 +389,7 @@
           <li><strong>One app on desktop and phone,</strong> with local-first sync between them, automatic backups, and updates that install themselves.</li>
           <li><strong>Shows each deck's tournament record</strong> from Pairings.</li>
         </ul>
-        <div class="stack"><span>TypeScript</span><span>React</span><span>Electron</span><span>PWA</span><span>Zustand</span><span>331 tests</span></div>
+        <div class="stack"><span>TypeScript</span><span>React</span><span>Electron</span><span>PWA</span><span>Zustand</span><span>629 tests</span></div>
         <div class="links">
           <a class="primary" href="https://github.com/beeftcg-eng/deckbuilder-releases/releases/latest" target="_blank" rel="noopener">Download</a>
           <a href="https://beeftcg-eng.github.io/deckbuilder/" target="_blank" rel="noopener">Phone app</a>
@@ -399,7 +405,7 @@
     <!-- 004 Pawmodoro -->
     <article class="entry pm" id="pawmodoro">
       <div class="text">
-        <div class="meta"><span class="num">004 / 004</span><span>Desktop + phone</span><span>v2.13.3</span><span>Since Sep 16</span></div>
+        <div class="meta"><span class="num">004 / 005</span><span>Desktop + phone</span><span>v2.19.1</span><span>Since Sep 16</span></div>
         <h3>Pawmodoro</h3>
         <p class="pitch">A pen-and-paper style desktop app that puts notes, a recurring checklist, a pomodoro timer and ambient sound in one window, with XP and quests to make the routine stick.</p>
         <ul>
@@ -418,6 +424,29 @@
       <figure class="specimen shot wide">
         <img src="img/pawmodoro.webp" width="1100" height="700" alt="Pawmodoro on the desktop: lined-paper notes beside a recurring checklist, with the player bar below" loading="lazy" decoding="async">
         <figcaption>Screenshot · example notes and tasks</figcaption>
+      </figure>
+    </article>
+    <!-- 005 Dungeons Desk -->
+    <article class="entry dd" id="dungeonsdesk">
+      <div class="text">
+        <div class="meta"><span class="num">005 / 005</span><span>Desktop + phone</span><span>v1.0.3</span><span>Since Oct 10</span></div>
+        <h3>Dungeons Desk</h3>
+        <p class="pitch">A desktop toolkit for Dungeon Masters. Linked notes, initiative and an encounter builder, battle maps with fog of war, tokens, handouts and loot share one window, and the players join from their phones.</p>
+        <ul>
+          <li><strong>Players' phones are part of the table:</strong> scan a QR code to follow the turn order, handouts, the shared wiki and the map, and keep your own character sheet.</li>
+          <li><strong>Notes stay plain Markdown,</strong> Obsidian-compatible, with wikilinks, stat blocks and clickable dice, plus version history and daily backups.</li>
+          <li><strong>Phones can't change the DM's game:</strong> every player action needs the join code and is checked by the DM app, and secrets and hidden monsters never reach a phone.</li>
+          <li><strong>Built on the 5e SRD:</strong> monsters, spells, items and rules, and a 2024 character sheet that does the maths.</li>
+        </ul>
+        <div class="stack"><span>JavaScript</span><span>Electron</span><span>Server-Sent Events</span><span>Markdown</span><span>Auto-updates</span></div>
+        <div class="links">
+          <a class="primary" href="https://github.com/beeftcg-eng/dungeons-desk/releases/latest" target="_blank" rel="noopener">Download</a>
+          <a href="https://github.com/beeftcg-eng/dungeons-desk" target="_blank" rel="noopener">Source</a>
+        </div>
+      </div>
+      <figure class="specimen shot wide">
+        <img src="img/dungeonsdesk.webp" width="1400" height="900" alt="Dungeons Desk notes view: a campaign vault in the sidebar, a note in split edit and preview, and its links and tags" loading="lazy" decoding="async">
+        <figcaption>Screenshot · example campaign</figcaption>
       </figure>
     </article>
   </div>
