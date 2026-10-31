@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Beef's Workshop</title>
-<meta name="description" content="Beef's shipped apps for trading card game and tabletop players: Pairings, TurnZero, Beef's Brewhouse, Pawmodoro and Dungeons Desk.">
+<meta name="description" content="Beef's shipped apps for trading card game and tabletop players: Pairings, TurnZero, Beef's Brewhouse, Pawmodoro, Dungeons Desk and Riftbound Points.">
 <meta property="og:title" content="Beef's Workshop">
-<meta property="og:description" content="Tools for the table: a tournament tracker, a deckbuilder, a round timer, a pomodoro app and a desk for Dungeon Masters.">
+<meta property="og:description" content="Tools for the table: a tournament tracker, a deckbuilder, a round timer, a pomodoro app, a desk for Dungeon Masters and a Riftbound point counter.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://beeftcg-eng.github.io/">
 <meta name="theme-color" content="#1d4a3a">
@@ -31,6 +31,7 @@
     --brewhouse: #b3690e;
     --pawmodoro: #6c4f9e;
     --dungeons: #3b5fa8;
+    --points: #8a6a12;
     --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
     --body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -51,6 +52,7 @@
       --brewhouse: #eba44a;
       --pawmodoro: #b59ae6;
     --dungeons: #8fb0ef;
+    --points: #f4d58d;
     }
   }
   :root[data-theme="dark"] {
@@ -68,6 +70,7 @@
     --brewhouse: #eba44a;
     --pawmodoro: #b59ae6;
     --dungeons: #8fb0ef;
+    --points: #f4d58d;
   }
 
   * { box-sizing: border-box; }
@@ -141,7 +144,7 @@
   .zones {
     margin-top: 34px;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 12px;
   }
   .zone {
@@ -190,6 +193,7 @@
   .entry.bh { --accent: var(--brewhouse); }
   .entry.pm { --accent: var(--pawmodoro); }
   .entry.dd { --accent: var(--dungeons); }
+  .entry.rp { --accent: var(--points); }
   .entry .text { padding: clamp(22px, 3.2vw, 34px); display: flex; flex-direction: column; gap: 14px; }
   .meta {
     display: flex;
@@ -272,7 +276,7 @@
   .link-card { padding: 20px; border-radius: 12px; background: var(--sheet); border: 1px solid var(--rule); display: flex; flex-direction: column; gap: 10px; }
   .pair { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--display); font-weight: 800; font-stretch: 112%; font-size: 18px; }
   .pair .arrow { font-family: var(--mono); font-weight: 500; color: var(--ink-soft); font-size: 15px; }
-  .c-tz { color: var(--turnzero); } .c-pr { color: var(--pairings); } .c-bh { color: var(--brewhouse); } .c-pm { color: var(--pawmodoro); } .c-dd { color: var(--dungeons); }
+  .c-tz { color: var(--turnzero); } .c-pr { color: var(--pairings); } .c-bh { color: var(--brewhouse); } .c-pm { color: var(--pawmodoro); } .c-dd { color: var(--dungeons); } .c-rp { color: var(--points); }
   .link-card p { margin: 0; color: var(--ink-soft); font-size: 15px; }
 
   /* ---------- habits ---------- */
@@ -294,6 +298,9 @@
   }
   footer a { font-weight: 600; color: var(--ink); }
 
+  @media (max-width: 1100px) {
+    .zones { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
   @media (max-width: 820px) {
     .entry { grid-template-columns: 1fr; }
     .specimen { border-left: 0; border-top: 1px solid var(--rule); }
@@ -311,8 +318,8 @@
     <h1>Tools for the <span class="foil">table.</span></h1>
     <p class="lede">
       I build software for trading card game players: a tournament tracker, a deckbuilder, and a round timer for judges.
-      There's also a pomodoro app, for getting everything else done, and a desk for Dungeon Masters. All five are shipping
-      and in use, and they were built between August&nbsp;30 and October&nbsp;10, 2026.
+      There's also a pomodoro app, for getting everything else done, a desk for Dungeon Masters, and a Riftbound point
+      counter that can put the score on stream. All six are shipping, and they were built between August&nbsp;30 and October&nbsp;31, 2026.
     </p>
     <nav class="zones" aria-label="Projects">
       <a class="zone" href="#pairings"><span class="no">001 · Web</span><b>Pairings</b><span>Tournament tracker</span></a>
@@ -320,6 +327,7 @@
       <a class="zone" href="#brewhouse"><span class="no">003 · Desktop + phone</span><b>Beef's Brewhouse</b><span>Deckbuilder</span></a>
       <a class="zone" href="#pawmodoro"><span class="no">004 · Desktop + phone</span><b>Pawmodoro</b><span>Focus &amp; to-dos</span></a>
       <a class="zone" href="#dungeonsdesk"><span class="no">005 · Desktop + phone</span><b>Dungeons Desk</b><span>D&amp;D toolkit</span></a>
+      <a class="zone" href="#points"><span class="no">006 · Phone + tablet</span><b>Riftbound Points</b><span>Point counter</span></a>
     </nav>
   </header>
 
@@ -332,7 +340,7 @@
     <!-- 001 Pairings -->
     <article class="entry pr" id="pairings">
       <div class="text">
-        <div class="meta"><span class="num">001 / 005</span><span>Progressive web app</span><span>v1.34.0</span><span>Since Aug 30</span></div>
+        <div class="meta"><span class="num">001 / 006</span><span>Progressive web app</span><span>v1.34.0</span><span>Since Aug 30</span></div>
         <h3>Pairings</h3>
         <p class="pitch">A tracker for local TCG tournaments. It keeps your events, your results round by round, and your decks in one place, and it tells your friends where you're playing next.</p>
         <ul>
@@ -357,7 +365,7 @@
     <!-- 002 TurnZero -->
     <article class="entry tz" id="turnzero">
       <div class="text">
-        <div class="meta"><span class="num">002 / 005</span><span>Web app</span><span>v2.1.0</span><span>Since Sep 7</span></div>
+        <div class="meta"><span class="num">002 / 006</span><span>Web app</span><span>v2.1.0</span><span>Since Sep 7</span></div>
         <h3>TurnZero</h3>
         <p class="pitch">A shared round timer for TCG events. The judge controls the clock, and every player sees it live on their phone or on the store's TV.</p>
         <ul>
@@ -380,7 +388,7 @@
     <!-- 003 Brewhouse -->
     <article class="entry bh" id="brewhouse">
       <div class="text">
-        <div class="meta"><span class="num">003 / 005</span><span>Desktop + phone</span><span>v0.47.0</span><span>Since Sep 15</span></div>
+        <div class="meta"><span class="num">003 / 006</span><span>Desktop + phone</span><span>v0.47.0</span><span>Since Sep 15</span></div>
         <h3>Beef's Brewhouse</h3>
         <p class="pitch">A deckbuilder for five games: Riftbound, One Piece, Pokémon, Magic: The Gathering and Yu-Gi-Oh!. It has card images, legality checking against each game's real format rules, and your collection built in.</p>
         <ul>
@@ -405,7 +413,7 @@
     <!-- 004 Pawmodoro -->
     <article class="entry pm" id="pawmodoro">
       <div class="text">
-        <div class="meta"><span class="num">004 / 005</span><span>Desktop + phone</span><span>v2.19.1</span><span>Since Sep 16</span></div>
+        <div class="meta"><span class="num">004 / 006</span><span>Desktop + phone</span><span>v2.19.1</span><span>Since Sep 16</span></div>
         <h3>Pawmodoro</h3>
         <p class="pitch">A pen-and-paper style desktop app that puts notes, a recurring checklist, a pomodoro timer and ambient sound in one window, with XP and quests to make the routine stick.</p>
         <ul>
@@ -429,7 +437,7 @@
     <!-- 005 Dungeons Desk -->
     <article class="entry dd" id="dungeonsdesk">
       <div class="text">
-        <div class="meta"><span class="num">005 / 005</span><span>Desktop + phone</span><span>v1.0.3</span><span>Since Oct 10</span></div>
+        <div class="meta"><span class="num">005 / 006</span><span>Desktop + phone</span><span>v1.0.3</span><span>Since Oct 10</span></div>
         <h3>Dungeons Desk</h3>
         <p class="pitch">A desktop toolkit for Dungeon Masters. Linked notes, initiative and an encounter builder, battle maps with fog of war, tokens, handouts and loot share one window, and the players join from their phones.</p>
         <ul>
@@ -447,6 +455,28 @@
       <figure class="specimen shot wide">
         <img src="img/dungeonsdesk.webp" width="1400" height="900" alt="Dungeons Desk notes view: a campaign vault in the sidebar, a note in split edit and preview, and its links and tags" loading="lazy" decoding="async">
         <figcaption>Screenshot · example campaign</figcaption>
+      </figure>
+    </article>
+
+    <!-- 006 Riftbound Points -->
+    <article class="entry rp" id="points">
+      <div class="text">
+        <div class="meta"><span class="num">006 / 006</span><span>Installable web app</span><span>v1.0.0</span><span>Since Oct 31</span></div>
+        <h3>Riftbound Points</h3>
+        <p class="pitch">A point counter for Riftbound, made for phones and tablets. Tap either half of a player's side to score, and at a streamed event, link to the broadcast with a code so your points show on the overlay as you tap.</p>
+        <ul>
+          <li><strong>Built for the table:</strong> each half of the screen is a button, holding keeps counting, the opponent's side faces them, and the screen stays on.</li>
+          <li><strong>Live on stream:</strong> scan the organiser's QR code or type a 6-character code, and each tap reaches the stream overlay in about a tenth of a second, on any Wi-Fi or mobile data.</li>
+          <li><strong>Installs like an app</strong> on Android, iPhone and iPad, and works offline once opened. No account needed.</li>
+        </ul>
+        <div class="stack"><span>JavaScript</span><span>PWA</span><span>Supabase Realtime</span><span>Wake Lock</span></div>
+        <div class="links">
+          <a class="primary" href="https://beeftcg-eng.github.io/points/" target="_blank" rel="noopener">Open Riftbound Points</a>
+        </div>
+      </div>
+      <figure class="specimen shot phone">
+        <img src="img/points.webp" width="720" height="1474" alt="Riftbound Points on a phone: two players' scores, 4 and 6 of 8, with the opponent's half turned to face them" loading="lazy" decoding="async">
+        <figcaption>Screenshot · live app</figcaption>
       </figure>
     </article>
   </div>

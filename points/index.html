@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=resizes-content">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0b0b1a">
 <meta name="description" content="Free Riftbound point counter. Link it to a tournament stream with a code.">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,32 +17,32 @@
 <body>
 <main id="board">
   <section class="side them" id="them">
-    <div class="name" id="themName">Opponent</div>
-    <div class="pts-row">
-      <button class="step minus" data-who="them" data-d="-1" aria-label="Opponent minus one">−</button>
+    <button class="zone minus" data-who="them" data-d="-1" aria-label="Opponent minus one"><span>−</span></button>
+    <button class="zone plus" data-who="them" data-d="1" aria-label="Opponent plus one"><span>+</span></button>
+    <div class="center">
+      <div class="name" id="themName">Opponent</div>
       <div class="pts" id="themPts">0</div>
-      <button class="step plus" data-who="them" data-d="1" aria-label="Opponent plus one">+</button>
+      <div class="pips" id="themPips"></div>
+      <div class="note" id="themNote"></div>
     </div>
-    <div class="pips" id="themPips"></div>
-    <div class="note" id="themNote"></div>
   </section>
 
   <nav class="bar">
-    <button id="resetBtn" title="Both scores back to 0">↺ Reset</button>
+    <button id="resetBtn" title="Both scores back to 0" aria-label="Reset">↺<span class="lbl"> Reset</span></button>
     <button id="linkBtn" class="link">📡 Link to stream</button>
-    <button id="installBtn" class="install" hidden>⬇ Install</button>
-    <button id="menuBtn" title="Settings">⚙</button>
+    <button id="installBtn" class="install" hidden aria-label="Install">⬇<span class="lbl"> Install</span></button>
+    <button id="menuBtn" title="Settings" aria-label="Settings">⚙</button>
   </nav>
 
   <section class="side me" id="me">
-    <div class="name" id="meName">You</div>
-    <div class="pts-row">
-      <button class="step minus" data-who="me" data-d="-1" aria-label="Minus one">−</button>
+    <button class="zone minus" data-who="me" data-d="-1" aria-label="minus one"><span>−</span></button>
+    <button class="zone plus" data-who="me" data-d="1" aria-label="plus one"><span>+</span></button>
+    <div class="center">
+      <div class="name" id="meName">You</div>
       <div class="pts" id="mePts">0</div>
-      <button class="step plus" data-who="me" data-d="1" aria-label="Plus one">+</button>
+      <div class="pips" id="mePips"></div>
+      <div class="note" id="meNote"></div>
     </div>
-    <div class="pips" id="mePips"></div>
-    <div class="note" id="meNote"></div>
   </section>
 </main>
 
@@ -77,6 +78,7 @@
     <label>Points to win <input id="winIn" type="number" min="1" max="30" inputmode="numeric"></label>
     <label class="check"><input id="flipIn" type="checkbox"> Flip opponent's side (phone in the middle of the table)</label>
     <label class="check"><input id="buzzIn" type="checkbox"> Buzz on tap</label>
+    <label class="check"><input id="awakeIn" type="checkbox"> Keep the screen on</label>
     <button type="button" id="installHelpBtn" class="install-help">⬇ Install on this phone</button>
     <div class="row">
       <button value="close" class="primary">Done</button>

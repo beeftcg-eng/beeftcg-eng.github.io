@@ -1,6 +1,6 @@
 // Offline cache: the app keeps working without signal once it has been opened once.
 // Network first (so updates arrive), cache as the fallback.
-const CACHE = 'riftbound-points-v2'
+const CACHE = 'riftbound-points-v3'
 const FILES = ['./', 'index.html', 'app.css', 'app.js', 'relay.js', 'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable.png', 'apple-touch-icon.png', 'manifest.webmanifest']
 
 self.addEventListener('install', (e) => {

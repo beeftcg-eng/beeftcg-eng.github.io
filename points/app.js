@@ -10,7 +10,7 @@ const $ = (s) => document.querySelector(s)
 const STORE = 'riftbound-points-v1'
 const CODE_RE = /^[A-HJ-NP-Z2-9]{4,8}$/ // the alphabet Riftcast uses: no 0/O/1/I/L
 
-const defaults = { me: 0, them: 0, meName: '', themName: '', win: 8, flip: true, buzz: true, code: null }
+const defaults = { me: 0, them: 0, meName: '', themName: '', win: 8, flip: true, buzz: true, awake: true, code: null }
 let s = { ...defaults, ...load() }
 let stream = null // last scoreboard from the stream while linked
 let relay = null
@@ -57,7 +57,7 @@ function render() {
   setWon('me', s.me >= win)
   setWon('them', them >= win)
   // While linked the stream keeps the opponent's score (from their own phone or the organiser).
-  for (const b of document.querySelectorAll('[data-who="them"]')) b.disabled = linked()
+  for (const b of document.querySelectorAll('.zone[data-who="them"]')) b.disabled = linked()
   $('#resetBtn').disabled = linked()
   document.body.classList.toggle('flip', s.flip && !linked())
 
@@ -202,9 +202,39 @@ function change(who, d) {
   render()
 }
 
-document.querySelectorAll('.step').forEach((b) =>
-  b.addEventListener('click', () => change(b.dataset.who, Number(b.dataset.d))),
-)
+// Tap a half to change the score by one; hold it to keep counting (handy for fixing a score).
+document.querySelectorAll('.zone').forEach((z) => {
+  let holdTimer = null, repeatTimer = null, repeated = false
+  const stop = () => {
+    clearTimeout(holdTimer)
+    clearInterval(repeatTimer)
+    holdTimer = repeatTimer = null
+  }
+  const step = () => change(z.dataset.who, Number(z.dataset.d))
+  z.addEventListener('pointerdown', (e) => {
+    if (z.disabled || (e.pointerType === 'mouse' && e.button !== 0)) return
+    const r = z.getBoundingClientRect()
+    z.style.setProperty('--x', `${((e.clientX - r.left) / r.width) * 100}%`)
+    z.style.setProperty('--y', `${((e.clientY - r.top) / r.height) * 100}%`)
+    z.classList.add('flash')
+    repeated = false
+    stop()
+    holdTimer = setTimeout(() => {
+      repeated = true
+      step()
+      repeatTimer = setInterval(step, 160)
+    }, 500)
+  })
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) z.addEventListener(ev, () => {
+    stop()
+    z.classList.remove('flash')
+  })
+  z.addEventListener('click', () => {
+    if (repeated) repeated = false
+    else step()
+  })
+  z.addEventListener('contextmenu', (e) => e.preventDefault())
+})
 
 $('#resetBtn').addEventListener('click', (e) => {
   const b = e.currentTarget
@@ -330,6 +360,7 @@ $('#menuBtn').addEventListener('click', () => {
   $('#winIn').value = s.win
   $('#flipIn').checked = s.flip
   $('#buzzIn').checked = s.buzz
+  $('#awakeIn').checked = s.awake
   $('#menuDlg').showModal()
 })
 $('#menuDlg').addEventListener('close', () => {
@@ -338,9 +369,29 @@ $('#menuDlg').addEventListener('close', () => {
   s.win = Math.max(1, Math.min(30, Math.round(Number($('#winIn').value)) || 8))
   s.flip = $('#flipIn').checked
   s.buzz = $('#buzzIn').checked
+  s.awake = $('#awakeIn').checked
   save()
+  keepAwake()
   render()
 })
+
+// Keep the screen on during a game (the browser drops the lock when the app is hidden).
+let wakeLock = null
+async function keepAwake() {
+  if (!s.awake) {
+    wakeLock?.release().catch(() => {})
+    wakeLock = null
+    return
+  }
+  if (wakeLock || document.visibilityState !== 'visible' || !navigator.wakeLock) return
+  try {
+    wakeLock = await navigator.wakeLock.request('screen')
+    wakeLock.addEventListener('release', () => (wakeLock = null))
+  } catch {}
+}
+document.addEventListener('visibilitychange', keepAwake)
+// Some browsers only grant the lock after a tap.
+document.addEventListener('pointerdown', keepAwake, { once: true })
 
 // ---- Start ----
 
@@ -359,5 +410,6 @@ if (s.code) link(s.code)
 codeFromHash()
 render()
 booted = true
+keepAwake()
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {})
