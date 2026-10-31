@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0b1a">
+<meta name="description" content="Free Riftbound point counter. Link it to a tournament stream with a code.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Riftbound Points</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main id="board">
+  <section class="side them" id="them">
+    <div class="name" id="themName">Opponent</div>
+    <div class="pts-row">
+      <button class="step minus" data-who="them" data-d="-1" aria-label="Opponent minus one">−</button>
+      <div class="pts" id="themPts">0</div>
+      <button class="step plus" data-who="them" data-d="1" aria-label="Opponent plus one">+</button>
+    </div>
+    <div class="pips" id="themPips"></div>
+    <div class="note" id="themNote"></div>
+  </section>
+
+  <nav class="bar">
+    <button id="resetBtn" title="Both scores back to 0">↺ Reset</button>
+    <button id="linkBtn" class="link">📡 Link to stream</button>
+    <button id="installBtn" class="install" hidden>⬇ Install</button>
+    <button id="menuBtn" title="Settings">⚙</button>
+  </nav>
+
+  <section class="side me" id="me">
+    <div class="name" id="meName">You</div>
+    <div class="pts-row">
+      <button class="step minus" data-who="me" data-d="-1" aria-label="Minus one">−</button>
+      <div class="pts" id="mePts">0</div>
+      <button class="step plus" data-who="me" data-d="1" aria-label="Plus one">+</button>
+    </div>
+    <div class="pips" id="mePips"></div>
+    <div class="note" id="meNote"></div>
+  </section>
+</main>
+
+<dialog id="linkDlg">
+  <form method="dialog" id="linkForm">
+    <h2>Link to the stream</h2>
+    <p>Enter the code the tournament organiser gave you. Your points will show on the stream as you change them.</p>
+    <input id="codeIn" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="8" placeholder="ABC234" inputmode="text">
+    <p class="err" id="linkErr"></p>
+    <div class="row">
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button id="linkGo" value="go" class="primary">Link</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="linkedDlg">
+  <form method="dialog">
+    <h2>Linked to the stream</h2>
+    <p id="linkedInfo"></p>
+    <div class="row">
+      <button id="unlinkBtn" value="unlink" class="danger">Unlink</button>
+      <button value="close" class="primary">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="menuDlg">
+  <form method="dialog">
+    <h2>Settings</h2>
+    <label>Your name <input id="nameIn" maxlength="24" placeholder="You"></label>
+    <label>Opponent <input id="oppIn" maxlength="24" placeholder="Opponent"></label>
+    <label>Points to win <input id="winIn" type="number" min="1" max="30" inputmode="numeric"></label>
+    <label class="check"><input id="flipIn" type="checkbox"> Flip opponent's side (phone in the middle of the table)</label>
+    <label class="check"><input id="buzzIn" type="checkbox"> Buzz on tap</label>
+    <button type="button" id="installHelpBtn" class="install-help">⬇ Install on this phone</button>
+    <div class="row">
+      <button value="close" class="primary">Done</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="installDlg">
+  <form method="dialog">
+    <h2>Install Riftbound Points</h2>
+    <p id="installIntro">Put it on your home screen so it opens like an app and works with no signal.</p>
+    <ol class="ios-steps" id="installSteps"></ol>
+    <div class="row"><button value="close" class="primary">Got it</button></div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#2a2160"/>
+      <stop offset=".55" stop-color="#141332"/>
+      <stop offset="1" stop-color="#0a0b18"/>
+    </radialGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e5b8f"/>
+      <stop offset="1" stop-color="#5a2a7a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9a8"/>
+      <stop offset="1" stop-color="#e0a23a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="rotate(-8 256 256)">
+    <rect x="156" y="106" width="200" height="290" rx="24" fill="url(#card)" stroke="url(#gold)" stroke-width="10"/>
+    <rect x="178" y="128" width="156" height="246" rx="14" fill="none" stroke="#ffffff" stroke-opacity=".18" stroke-width="4"/>
+    <text x="256" y="318" font-family="DejaVu Sans, Arial, sans-serif" font-weight="bold" font-size="170" text-anchor="middle" fill="url(#gold)">8</text>
+  </g>
+  <g fill="#f4d58d">
+    <circle cx="146" cy="420" r="11"/><circle cx="176" cy="420" r="11"/><circle cx="206" cy="420" r="11"/><circle cx="236" cy="420" r="11"/>
+    <circle cx="276" cy="420" r="11"/><circle cx="306" cy="420" r="11"/><circle cx="336" cy="420" r="11"/>
+    <circle cx="366" cy="420" r="11" fill="none" stroke="#f4d58d" stroke-width="5"/>
+  </g>
+</svg>
