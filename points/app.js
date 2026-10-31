@@ -2,7 +2,7 @@
 // score to a Riftcast stream with a code from the tournament organiser.
 //
 // Linking: the app and Riftcast meet on a Supabase Realtime broadcast channel named after the code.
-//   app -> stream:  hello {}, ping {}, points { points }
+//   app -> stream:  hello {}, ping {}, points { points, kind: 'conquer' | 'hold' | 'minus' }
 //   stream -> app:  state { me, them, winPoints, event, round }, expired {}
 import { Relay, channelName } from './relay.js'
 
@@ -10,8 +10,9 @@ const $ = (s) => document.querySelector(s)
 const STORE = 'riftbound-points-v1'
 const CODE_RE = /^[A-HJ-NP-Z2-9]{4,8}$/ // the alphabet Riftcast uses: no 0/O/1/I/L
 
-const defaults = { me: 0, them: 0, meName: '', themName: '', win: 8, flip: true, buzz: true, awake: true, code: null }
+const defaults = { me: 0, them: 0, meName: '', themName: '', win: 8, flip: true, buzz: true, awake: true, code: null, log: [] }
 let s = { ...defaults, ...load() }
+if (!Array.isArray(s.log)) s.log = []
 let stream = null // last scoreboard from the stream while linked
 let relay = null
 let ch = null
@@ -56,6 +57,7 @@ function render() {
   animateChange('them', them)
   setWon('me', s.me >= win)
   setWon('them', them >= win)
+  renderAlerts({ me: s.me, them }, { me: meName, them: themName }, win)
   // While linked the stream keeps the opponent's score (from their own phone or the organiser).
   for (const b of document.querySelectorAll('.zone[data-who="them"]')) b.disabled = linked()
   $('#resetBtn').disabled = linked()
@@ -77,6 +79,101 @@ function render() {
   $('#meNote').textContent = meNote
   $('#themNote').textContent = themNote
 }
+
+// One point from winning: warn the other player, and remind the player on the brink how the
+// final point works (Riftbound: a Conquer only scores it if you scored every battlefield this turn).
+function renderAlerts(pts, names, win) {
+  const over = pts.me >= win || pts.them >= win
+  for (const who of ['me', 'them']) {
+    const other = who === 'me' ? 'them' : 'me'
+    const lines = []
+    if (!over && win > 1 && pts[other] === win - 1) lines.push(`<div class="alert danger">⚠ ${names[other] === 'You' ? 'You are' : `${esc(names[other])} is`} at ${pts[other]}: one point from winning</div>`)
+    if (!over && win > 1 && pts[who] === win - 1) lines.push(`<div class="alert legend">Final point: 🛡 Hold, or ⚔ Conquer only with every battlefield scored this turn</div>`)
+    const html = lines.join('')
+    const el = $(`#${who}Alerts`)
+    if (el.innerHTML !== html) el.innerHTML = html
+    $(`#${who}`).classList.toggle('threat', !over && pts[other] === win - 1)
+  }
+}
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+
+// ---- Log ----
+
+const KIND = {
+  conquer: { ico: '⚔', text: 'Conquer' },
+  hold: { ico: '🛡', text: 'Hold' },
+  minus: { ico: '−', text: 'Correction' },
+  card: { ico: '🃏', text: 'Conquer at the final point: drew a card instead' },
+  stream: { ico: '📡', text: 'Updated from the stream' },
+  undo: { ico: '↶', text: 'Undo' },
+}
+const nameOf = (who) => (who === 'me' ? (linked() && stream?.me?.name) || s.meName || 'You' : (linked() && stream?.them?.name) || s.themName || 'Opponent')
+
+function addLog(who, kind, from, to) {
+  s.log.push({ t: Date.now(), who, kind, from, to, name: nameOf(who) })
+  if (s.log.length > 300) s.log = s.log.slice(-300)
+}
+
+function renderLog() {
+  const tally = { me: { conquer: 0, hold: 0, minus: 0 }, them: { conquer: 0, hold: 0, minus: 0 } }
+  // Totals for the current game: everything since the last reset.
+  const lastReset = s.log.findLastIndex((e) => e.kind === 'reset')
+  for (const e of s.log.slice(lastReset + 1)) {
+    if (['conquer', 'hold', 'minus'].includes(e.kind)) tally[e.who][e.kind] += Math.abs(e.to - e.from)
+  }
+  const them = linked() && stream ? stream.them.points : s.them
+  $('#tally').innerHTML = ['me', 'them'].map((who) => `<div class="${who}">
+    <h3>${esc(nameOf(who))}</h3>
+    <div class="big">${who === 'me' ? s.me : them}</div>
+    <div class="split">⚔ ${tally[who].conquer} conquer · 🛡 ${tally[who].hold} hold${tally[who].minus ? ` · −${tally[who].minus} corrected` : ''}</div>
+  </div>`).join('')
+  const time = (t) => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  $('#logList').innerHTML = s.log.length
+    ? [...s.log].reverse().map((e) => e.kind === 'reset'
+      ? `<li class="divider">New game · ${time(e.t)}</li>`
+      : `<li><span class="t">${time(e.t)}</span><span>${KIND[e.kind]?.ico ?? '•'}</span><span><span class="who-${e.who}">${esc(e.name)}</span> ${esc(KIND[e.kind]?.text ?? e.kind)}</span><span class="score">${e.from} → ${e.to}</span></li>`).join('')
+    : '<li class="empty">No points yet this session.</li>'
+  $('#undoBtn').disabled = !undoable()
+}
+
+function undoable() {
+  for (let i = s.log.length - 1; i >= 0; i--) {
+    const e = s.log[i]
+    if (e.kind === 'reset') return null
+    if (['conquer', 'hold', 'minus'].includes(e.kind) && !(linked() && e.who === 'them')) return i
+  }
+  return null
+}
+
+$('#logBtn').addEventListener('click', () => {
+  renderLog()
+  $('#logDlg').showModal()
+})
+$('#undoBtn').addEventListener('click', () => {
+  const i = undoable()
+  if (i === null) return
+  const e = s.log[i]
+  s.log.splice(i, 1)
+  setScore(e.who, e.from, 'undo', false)
+  renderLog()
+})
+$('#clearLogBtn').addEventListener('click', (ev) => {
+  const b = ev.currentTarget
+  if (!b.dataset.armed) {
+    b.dataset.armed = '1'
+    b.textContent = 'Tap again to clear'
+    setTimeout(() => {
+      delete b.dataset.armed
+      b.textContent = 'Clear'
+    }, 2500)
+    return
+  }
+  delete b.dataset.armed
+  b.textContent = 'Clear'
+  s.log = []
+  save()
+  renderLog()
+})
 
 // ---- Flair ----
 
@@ -186,23 +283,60 @@ function toast(msg, ms = 3500) {
 
 // ---- Points ----
 
-function change(who, d) {
-  if (who === 'them') {
-    if (linked()) return
-    s.them = clampPts(s.them + d)
-  } else {
-    s.me = clampPts(s.me + d)
+const scoreOf = (who) => (who === 'me' ? s.me : linked() && stream ? stream.them.points : s.them)
+const winTarget = () => (linked() && stream?.winPoints) || s.win
+
+/** Set a player's score, log it (unless log=false) and tell the stream about our own changes. */
+function setScore(who, to, kind, log = true) {
+  if (who === 'them' && linked()) return
+  const from = scoreOf(who)
+  to = clampPts(to)
+  if (to === from) return
+  if (log) addLog(who, kind, from, to)
+  if (who === 'them') s.them = to
+  else {
+    s.me = to
     if (linked()) {
       localTapAt = Date.now()
-      pending = !ch?.send('points', { points: s.me })
+      pending = !ch?.send('points', { points: s.me, kind })
     }
   }
-  if (s.buzz) navigator.vibrate?.(d > 0 ? 25 : [15, 40, 15])
+  if (s.buzz) navigator.vibrate?.(to > from ? 25 : [15, 40, 15])
   save()
   render()
 }
 
-// Tap a half to change the score by one; hold it to keep counting (handy for fixing a score).
+function score(who, kind) {
+  if (who === 'them' && linked()) return
+  if (kind === 'minus') return setScore(who, scoreOf(who) - 1, 'minus')
+  const now = scoreOf(who), win = winTarget()
+  if (now >= win) return toast(`${nameOf(who)} has already won. Reset for a new game.`)
+  // Riftbound's final point rule: conquering only scores it if you scored every battlefield this turn.
+  if (kind === 'conquer' && now === win - 1) return askFinalPoint(who)
+  setScore(who, now + 1, kind)
+}
+
+let finalFor = null
+function askFinalPoint(who) {
+  finalFor = who
+  $('#finalText').textContent = `${nameOf(who)} is on ${scoreOf(who)}. The final point only comes from a conquer if every battlefield was scored this turn. Otherwise that player draws a card instead.`
+  $('#finalDlg').showModal()
+}
+document.querySelectorAll('[data-final]').forEach((btn) => btn.addEventListener('click', () => {
+  const who = finalFor, v = btn.dataset.final
+  finalFor = null
+  $('#finalDlg').close()
+  if (!who) return
+  if (v === 'yes') setScore(who, scoreOf(who) + 1, 'conquer')
+  else if (v === 'no') {
+    addLog(who, 'card', scoreOf(who), scoreOf(who))
+    save()
+    toast(`${nameOf(who)} draws a card instead of scoring.`)
+  }
+}))
+$('#finalDlg').addEventListener('close', () => (finalFor = null))
+
+// Tap a zone to score. Holding the minus half keeps counting down (handy for fixing a score).
 document.querySelectorAll('.zone').forEach((z) => {
   let holdTimer = null, repeatTimer = null, repeated = false
   const stop = () => {
@@ -210,7 +344,8 @@ document.querySelectorAll('.zone').forEach((z) => {
     clearInterval(repeatTimer)
     holdTimer = repeatTimer = null
   }
-  const step = () => change(z.dataset.who, Number(z.dataset.d))
+  const step = () => score(z.dataset.who, z.dataset.kind)
+  const repeats = z.dataset.kind === 'minus'
   z.addEventListener('pointerdown', (e) => {
     if (z.disabled || (e.pointerType === 'mouse' && e.button !== 0)) return
     const r = z.getBoundingClientRect()
@@ -219,7 +354,7 @@ document.querySelectorAll('.zone').forEach((z) => {
     z.classList.add('flash')
     repeated = false
     stop()
-    holdTimer = setTimeout(() => {
+    if (repeats) holdTimer = setTimeout(() => {
       repeated = true
       step()
       repeatTimer = setInterval(step, 160)
@@ -249,6 +384,7 @@ $('#resetBtn').addEventListener('click', (e) => {
   }
   delete b.dataset.armed
   b.textContent = '↺ Reset'
+  if (s.me || s.them) s.log.push({ t: Date.now(), kind: 'reset' })
   s.me = 0
   s.them = 0
   save()
@@ -267,7 +403,7 @@ function link(code) {
   ch = relay.channel(channelName(code), onMessage, (st) => {
     linkStatus = st
     if (st === 'joined') {
-      if (pending) pending = !ch.send('points', { points: s.me })
+      if (pending) pending = !ch.send('points', { points: s.me, kind: 'sync' })
       else ch.send('hello', {})
     }
     render()
@@ -312,9 +448,14 @@ function onMessage(event, p) {
   }
   if (event !== 'state' || !p?.me || !p?.them) return
   const first = !stream
+  const prevThem = stream?.them?.points
   stream = p
+  if (!first && Number.isFinite(p.them.points) && p.them.points !== prevThem) addLog('them', 'stream', prevThem, p.them.points)
   // The stream is the record (the organiser can fix scores too), except right after our own tap.
-  if (Date.now() - localTapAt > 1500 && Number.isFinite(p.me.points)) s.me = clampPts(p.me.points)
+  if (Date.now() - localTapAt > 1500 && Number.isFinite(p.me.points) && clampPts(p.me.points) !== s.me) {
+    if (!first) addLog('me', 'stream', s.me, clampPts(p.me.points))
+    s.me = clampPts(p.me.points)
+  }
   if (first) toast(`Linked: you are ${p.me.name || 'on stream'}`)
   save()
   render()

@@ -17,8 +17,10 @@
 <body>
 <main id="board">
   <section class="side them" id="them">
-    <button class="zone minus" data-who="them" data-d="-1" aria-label="Opponent minus one"><span>−</span></button>
-    <button class="zone plus" data-who="them" data-d="1" aria-label="Opponent plus one"><span>+</span></button>
+    <button class="zone minus" data-who="them" data-kind="minus" aria-label="Opponent minus one"><span class="ico">−</span></button>
+    <button class="zone conquer" data-who="them" data-kind="conquer" aria-label="Opponent conquer, plus one"><span class="stk"><span class="ico">⚔</span><b>Conquer</b></span></button>
+    <button class="zone hold" data-who="them" data-kind="hold" aria-label="Opponent hold, plus one"><span class="stk"><span class="ico">🛡</span><b>Hold</b></span></button>
+    <div class="alerts" id="themAlerts"></div>
     <div class="center">
       <div class="name" id="themName">Opponent</div>
       <div class="pts" id="themPts">0</div>
@@ -29,14 +31,17 @@
 
   <nav class="bar">
     <button id="resetBtn" title="Both scores back to 0" aria-label="Reset">↺<span class="lbl"> Reset</span></button>
+    <button id="logBtn" title="Score history" aria-label="Score history">📜<span class="lbl"> Log</span></button>
     <button id="linkBtn" class="link">📡 Link to stream</button>
     <button id="installBtn" class="install" hidden aria-label="Install">⬇<span class="lbl"> Install</span></button>
     <button id="menuBtn" title="Settings" aria-label="Settings">⚙</button>
   </nav>
 
   <section class="side me" id="me">
-    <button class="zone minus" data-who="me" data-d="-1" aria-label="minus one"><span>−</span></button>
-    <button class="zone plus" data-who="me" data-d="1" aria-label="plus one"><span>+</span></button>
+    <button class="zone minus" data-who="me" data-kind="minus" aria-label="minus one"><span class="ico">−</span></button>
+    <button class="zone conquer" data-who="me" data-kind="conquer" aria-label="conquer, plus one"><span class="stk"><span class="ico">⚔</span><b>Conquer</b></span></button>
+    <button class="zone hold" data-who="me" data-kind="hold" aria-label="hold, plus one"><span class="stk"><span class="ico">🛡</span><b>Hold</b></span></button>
+    <div class="alerts" id="meAlerts"></div>
     <div class="center">
       <div class="name" id="meName">You</div>
       <div class="pts" id="mePts">0</div>
@@ -45,6 +50,31 @@
     </div>
   </section>
 </main>
+
+<dialog id="logDlg" class="log-dlg">
+  <form method="dialog">
+    <h2>Score history</h2>
+    <div class="tally" id="tally"></div>
+    <ol class="log" id="logList"></ol>
+    <div class="row">
+      <button type="button" id="undoBtn" title="Take back the last change">↶ Undo last</button>
+      <button type="button" id="clearLogBtn" class="danger">Clear</button>
+      <button value="close" class="primary">Done</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="finalDlg">
+  <form method="dialog">
+    <h2>⚔ Conquering for the final point</h2>
+    <p id="finalText"></p>
+    <div class="col">
+      <button type="button" data-final="yes" class="primary">Scored every battlefield this turn: take the point</button>
+      <button type="button" data-final="no">Not every battlefield: draw a card instead</button>
+      <button type="button" data-final="cancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="linkDlg">
   <form method="dialog" id="linkForm">
