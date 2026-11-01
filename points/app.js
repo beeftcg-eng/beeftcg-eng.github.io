@@ -1,9 +1,11 @@
-// Riftbound Points: a two-player point counter that works on its own, and can link one player's
-// score to a Riftcast stream with a code from the tournament organiser.
+// Riftbound Points: a two-player point counter that works on its own, and can link to a Riftcast
+// stream with a code from the tournament organiser. A player's code links that player's score; the
+// table code links one phone that keeps both players' scores.
 //
 // Linking: the app and Riftcast meet on a Supabase Realtime broadcast channel named after the code.
-//   app -> stream:  hello {}, ping {}, points { points, kind: 'conquer' | 'hold' | 'minus' }
-//   stream -> app:  state { me, them, winPoints, event, round }, expired {}
+//   app -> stream:  hello {}, ping {}, points { points, kind: 'conquer' | 'hold' | 'minus' | 'reset', who?: 'them' }
+//   stream -> app:  state { me, them, winPoints, event, round, both? }, expired {}
+//   (who: 'them' is only honoured on the table code, whose state carries both: true)
 import { Relay, channelName } from './relay.js'
 
 const $ = (s) => document.querySelector(s)
@@ -33,6 +35,10 @@ function load() {
 const save = () => localStorage.setItem(STORE, JSON.stringify(s))
 const clampPts = (n) => Math.max(0, Math.min(99, n))
 const linked = () => !!s.code
+// Linked with the table code: this phone keeps both scores.
+const both = () => linked() && !!stream?.both
+// Linked with a player's own code: the opponent's score comes from the stream.
+const themLocked = () => linked() && !both()
 
 // ---- Rendering ----
 
@@ -46,7 +52,7 @@ function render() {
   const win = (linked() && stream?.winPoints) || s.win
   const meName = (linked() && stream?.me?.name) || s.meName || 'You'
   const themName = (linked() && stream?.them?.name) || s.themName || 'Opponent'
-  const them = linked() && stream ? stream.them.points : s.them
+  const them = scoreOf('them')
   $('#meName').textContent = meName
   $('#themName').textContent = themName
   $('#mePts').textContent = s.me
@@ -58,10 +64,10 @@ function render() {
   setWon('me', s.me >= win)
   setWon('them', them >= win)
   renderAlerts({ me: s.me, them }, { me: meName, them: themName }, win)
-  // While linked the stream keeps the opponent's score (from their own phone or the organiser).
-  for (const b of document.querySelectorAll('.zone[data-who="them"]')) b.disabled = linked()
-  $('#resetBtn').disabled = linked()
-  document.body.classList.toggle('flip', s.flip && !linked())
+  // Linked with a player's code, the stream keeps the opponent's score (their own phone or the organiser).
+  for (const b of document.querySelectorAll('.zone[data-who="them"]')) b.disabled = themLocked()
+  $('#resetBtn').disabled = themLocked()
+  document.body.classList.toggle('flip', s.flip && !themLocked())
 
   const btn = $('#linkBtn')
   btn.classList.toggle('on', linked() && linkStatus === 'joined' && !!stream)
@@ -74,7 +80,7 @@ function render() {
     else if (!stream) meNote = 'Waiting for the stream to answer…'
     else if (Date.now() - lastHeard > 60_000) meNote = 'The stream has gone quiet: is Riftcast still running?'
     else meNote = [stream.event, stream.round].filter(Boolean).join(' · ')
-    themNote = stream ? 'Kept by the stream' : ''
+    themNote = stream && !stream.both ? 'Kept by the stream' : ''
   }
   $('#meNote').textContent = meNote
   $('#themNote').textContent = themNote
@@ -121,7 +127,7 @@ function renderLog() {
   for (const e of s.log.slice(lastReset + 1)) {
     if (['conquer', 'hold', 'minus'].includes(e.kind)) tally[e.who][e.kind] += Math.abs(e.to - e.from)
   }
-  const them = linked() && stream ? stream.them.points : s.them
+  const them = scoreOf('them')
   $('#tally').innerHTML = ['me', 'them'].map((who) => `<div class="${who}">
     <h3>${esc(nameOf(who))}</h3>
     <div class="big">${who === 'me' ? s.me : them}</div>
@@ -140,7 +146,7 @@ function undoable() {
   for (let i = s.log.length - 1; i >= 0; i--) {
     const e = s.log[i]
     if (e.kind === 'reset') return null
-    if (['conquer', 'hold', 'minus'].includes(e.kind) && !(linked() && e.who === 'them')) return i
+    if (['conquer', 'hold', 'minus'].includes(e.kind) && !(themLocked() && e.who === 'them')) return i
   }
   return null
 }
@@ -283,31 +289,33 @@ function toast(msg, ms = 3500) {
 
 // ---- Points ----
 
-const scoreOf = (who) => (who === 'me' ? s.me : linked() && stream ? stream.them.points : s.them)
+const scoreOf = (who) => (who === 'me' ? s.me : themLocked() && stream ? stream.them.points : s.them)
 const winTarget = () => (linked() && stream?.winPoints) || s.win
 
 /** Set a player's score, log it (unless log=false) and tell the stream about our own changes. */
 function setScore(who, to, kind, log = true) {
-  if (who === 'them' && linked()) return
+  if (who === 'them' && themLocked()) return
   const from = scoreOf(who)
   to = clampPts(to)
   if (to === from) return
   if (log) addLog(who, kind, from, to)
   if (who === 'them') s.them = to
-  else {
-    s.me = to
-    if (linked()) {
-      localTapAt = Date.now()
-      pending = !ch?.send('points', { points: s.me, kind })
-    }
-  }
+  else s.me = to
+  if (linked()) sendPoints(who, kind)
   if (s.buzz) navigator.vibrate?.(to > from ? 25 : [15, 40, 15])
   save()
   render()
 }
 
+/** Tell the stream a score we changed (it is resent on reconnect if the link was down). */
+function sendPoints(who, kind) {
+  localTapAt = Date.now()
+  const ok = ch?.send('points', who === 'them' ? { points: s.them, kind, who } : { points: s.me, kind })
+  if (!ok) pending = true
+}
+
 function score(who, kind) {
-  if (who === 'them' && linked()) return
+  if (who === 'them' && themLocked()) return
   if (kind === 'minus') return setScore(who, scoreOf(who) - 1, 'minus')
   const now = scoreOf(who), win = winTarget()
   if (now >= win) return toast(`${nameOf(who)} has already won. Reset for a new game.`)
@@ -387,6 +395,10 @@ $('#resetBtn').addEventListener('click', (e) => {
   if (s.me || s.them) s.log.push({ t: Date.now(), kind: 'reset' })
   s.me = 0
   s.them = 0
+  if (both()) {
+    sendPoints('me', 'reset')
+    sendPoints('them', 'reset')
+  }
   save()
   render()
 })
@@ -403,8 +415,10 @@ function link(code) {
   ch = relay.channel(channelName(code), onMessage, (st) => {
     linkStatus = st
     if (st === 'joined') {
-      if (pending) pending = !ch.send('points', { points: s.me, kind: 'sync' })
-      else ch.send('hello', {})
+      if (pending) {
+        pending = !ch.send('points', { points: s.me, kind: 'sync' })
+        if (stream?.both) pending = !ch.send('points', { points: s.them, kind: 'sync', who: 'them' }) || pending
+      } else ch.send('hello', {})
     }
     render()
   })
@@ -450,13 +464,20 @@ function onMessage(event, p) {
   const first = !stream
   const prevThem = stream?.them?.points
   stream = p
-  if (!first && Number.isFinite(p.them.points) && p.them.points !== prevThem) addLog('them', 'stream', prevThem, p.them.points)
+  const settled = Date.now() - localTapAt > 1500
+  if (p.both) {
+    // Table phone: this phone keeps both scores, but the organiser can still fix them on the stream.
+    if (settled && Number.isFinite(p.them.points) && clampPts(p.them.points) !== s.them) {
+      if (!first) addLog('them', 'stream', s.them, clampPts(p.them.points))
+      s.them = clampPts(p.them.points)
+    }
+  } else if (!first && Number.isFinite(p.them.points) && p.them.points !== prevThem) addLog('them', 'stream', prevThem, p.them.points)
   // The stream is the record (the organiser can fix scores too), except right after our own tap.
-  if (Date.now() - localTapAt > 1500 && Number.isFinite(p.me.points) && clampPts(p.me.points) !== s.me) {
+  if (settled && Number.isFinite(p.me.points) && clampPts(p.me.points) !== s.me) {
     if (!first) addLog('me', 'stream', s.me, clampPts(p.me.points))
     s.me = clampPts(p.me.points)
   }
-  if (first) toast(`Linked: you are ${p.me.name || 'on stream'}`)
+  if (first) toast(p.both ? `Linked: keeping score for ${p.me.name || 'both players'} vs ${p.them.name || ''}`.trim() : `Linked: you are ${p.me.name || 'on stream'}`)
   save()
   render()
 }
@@ -464,7 +485,9 @@ function onMessage(event, p) {
 $('#linkBtn').addEventListener('click', () => {
   if (linked()) {
     $('#linkedInfo').textContent = stream
-      ? `Code ${s.code}: you are ${stream.me.name} vs ${stream.them.name}. Your points show on the stream as you tap.`
+      ? stream.both
+        ? `Code ${s.code}: this phone keeps score for ${stream.me.name} and ${stream.them.name}. Both players' points show on the stream as you tap.`
+        : `Code ${s.code}: you are ${stream.me.name} vs ${stream.them.name}. Your points show on the stream as you tap.`
       : `Code ${s.code}: waiting for the stream to answer. Check the code if this doesn't change.`
     $('#linkedDlg').showModal()
   } else {
