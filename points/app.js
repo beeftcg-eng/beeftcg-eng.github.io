@@ -4,7 +4,7 @@
 //
 // Linking: the app and Riftcast meet on a Supabase Realtime broadcast channel named after the code.
 //   app -> stream:  hello {}, ping {}, points { points, kind: 'conquer' | 'hold' | 'minus' | 'reset', who?: 'them' }
-//   stream -> app:  state { me, them, winPoints, event, round, both? }, expired {}
+//   stream -> app:  state { me, them, winPoints, timer, now, event, round, both? }, expired {}
 //   (who: 'them' is only honoured on the table code, whose state carries both: true)
 import { Relay, channelName } from './relay.js'
 
@@ -24,6 +24,7 @@ let pending = false // a tap made while the link was down still needs sending
 let localTapAt = 0
 let pingTimer = null
 let booted = false
+let clockOffset = 0 // the stream's clock minus ours
 
 function load() {
   try {
@@ -84,7 +85,29 @@ function render() {
   }
   $('#meNote').textContent = meNote
   $('#themNote').textContent = themNote
+  renderClock()
 }
+
+// ---- Round clock (from the stream) ----
+
+function renderClock() {
+  const t = linked() && stream?.timer
+  let text = '', cls = ''
+  if (t) {
+    const ms = t.running ? Math.max(0, t.endsAt - (Date.now() + clockOffset)) : Math.max(0, t.remainingMs ?? 0)
+    const secs = Math.ceil(ms / 1000)
+    text = secs > 0 ? `⏱ ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}${t.running ? '' : ' ⏸'}` : '⏱ Time!'
+    cls = secs <= 0 ? 'out' : secs <= 300 ? 'low' : ''
+    if (!t.running && secs > 0) cls += ' paused'
+  }
+  for (const id of ['#meClock', '#themClock']) {
+    const el = $(id)
+    el.hidden = !t
+    if (el.textContent !== text) el.textContent = text
+    el.className = `clock ${cls}`.trim()
+  }
+}
+setInterval(renderClock, 500)
 
 // One point from winning: warn the other player, and remind the player on the brink how the
 // final point works (Riftbound: a Conquer only scores it if you scored every battlefield this turn).
@@ -463,6 +486,7 @@ function onMessage(event, p) {
   if (event !== 'state' || !p?.me || !p?.them) return
   const first = !stream
   const prevThem = stream?.them?.points
+  if (Number.isFinite(p.now)) clockOffset = p.now - Date.now()
   stream = p
   const settled = Date.now() - localTapAt > 1500
   if (p.both) {

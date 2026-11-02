@@ -64,6 +64,11 @@ body.flip .side.them { transform: rotate(180deg); }
 .pip.on { background: var(--c); opacity: 1; box-shadow: 0 0 10px var(--c); animation: pop .35s cubic-bezier(.3,1.8,.5,1); }
 .side.won .pip.on { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 12px var(--gold); }
 @keyframes pop { from { transform: rotate(45deg) scale(.3); } }
+.clock { font-size: clamp(15px, 5cqh, 26px); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .5px; color: var(--dim); padding: 1px 10px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--dim) 40%, transparent); }
+.clock.low { color: #ffcf7a; border-color: #ffcf7a88; }
+.clock.out { color: #fff; background: #c2413a; border-color: #c2413a; animation: pulse 1.2s ease-in-out infinite; }
+.clock.paused { opacity: .6; }
+@keyframes pulse { 50% { opacity: .55; } }
 .note { min-height: 1.3em; font-size: clamp(13px, 4cqh, 20px); color: var(--dim); text-align: center; max-width: 100%; }
 .victory { position: absolute; top: max(10px, 4cqh); left: 50%; transform: translateX(-50%); font-weight: 800; letter-spacing: .2em; text-transform: uppercase; font-size: clamp(13px, 4.5cqh, 24px); color: var(--gold); text-shadow: 0 0 14px rgb(244 213 141 / .6); white-space: nowrap; animation: shine 1.6s ease-in-out infinite; pointer-events: none; }
 @keyframes shine { 50% { opacity: .6; } }
