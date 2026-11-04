@@ -25,6 +25,7 @@
       <div class="name" id="themName">Opponent</div>
       <div class="pts" id="themPts">0</div>
       <div class="pips" id="themPips"></div>
+      <div class="xp" id="themXp"><button class="xp-btn" data-xp="-1" data-who="them" aria-label="Opponent XP minus one">−</button><span class="xp-val"><b>0</b> XP<i class="lv"></i></span><button class="xp-btn" data-xp="1" data-who="them" aria-label="Opponent XP plus one">+</button></div>
       <div class="note" id="themNote"></div>
       <div class="clock" id="themClock" hidden></div>
     </div>
@@ -33,6 +34,7 @@
   <nav class="bar">
     <button id="resetBtn" title="Both scores back to 0" aria-label="Reset">↺<span class="lbl"> Reset</span></button>
     <button id="logBtn" title="Score history" aria-label="Score history">📜<span class="lbl"> Log</span></button>
+    <button id="rulesBtn" title="Search the official rules and cards" aria-label="Rules search">📖<span class="lbl"> Rules</span></button>
     <button id="linkBtn" class="link">📡 Link to stream</button>
     <button id="installBtn" class="install" hidden aria-label="Install">⬇<span class="lbl"> Install</span></button>
     <button id="menuBtn" title="Settings" aria-label="Settings">⚙</button>
@@ -47,6 +49,7 @@
       <div class="name" id="meName">You</div>
       <div class="pts" id="mePts">0</div>
       <div class="pips" id="mePips"></div>
+      <div class="xp" id="meXp"><button class="xp-btn" data-xp="-1" data-who="me" aria-label="XP minus one">−</button><span class="xp-val"><b>0</b> XP<i class="lv"></i></span><button class="xp-btn" data-xp="1" data-who="me" aria-label="XP plus one">+</button></div>
       <div class="note" id="meNote"></div>
       <div class="clock" id="meClock" hidden></div>
     </div>
@@ -62,6 +65,19 @@
       <button type="button" id="undoBtn" title="Take back the last change">↶ Undo last</button>
       <button type="button" id="clearLogBtn" class="danger">Clear</button>
       <button value="close" class="primary">Done</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="rulesDlg" class="rules-dlg">
+  <form method="dialog" id="rulesForm">
+    <h2>📖 Rules search</h2>
+    <p class="judge-note">Type a keyword, a card name or a rule number (like 730). Matching official Core Rules, Tournament Rules and card text show below. Works offline. <b>At an event, the judge's ruling is final.</b></p>
+    <input id="rulesIn" type="search" maxlength="200" autocomplete="off" placeholder="e.g. hunt xp, mulligan, Master Yi">
+    <h3 class="rb-title" id="rbTitle" hidden>📖 From the rulebook</h3>
+    <div class="rb-results" id="rbResults"></div>
+    <div class="row">
+      <button value="close" class="primary" formnovalidate>Close</button>
     </div>
   </form>
 </dialog>
@@ -109,6 +125,7 @@
     <label>Opponent <input id="oppIn" maxlength="24" placeholder="Opponent"></label>
     <label>Points to win <input id="winIn" type="number" min="1" max="30" inputmode="numeric"></label>
     <label class="check"><input id="flipIn" type="checkbox"> Flip opponent's side (phone in the middle of the table)</label>
+    <label class="check"><input id="xpIn" type="checkbox"> XP counter (Unleashed: Hunt, Level)</label>
     <label class="check"><input id="buzzIn" type="checkbox"> Buzz on tap</label>
     <label class="check"><input id="awakeIn" type="checkbox"> Keep the screen on</label>
     <button type="button" id="installHelpBtn" class="install-help">⬇ Install on this phone</button>

@@ -1,8 +1,8 @@
 {
-  "version": "0.6.0",
-  "notes": "Round clock on players' phones, a break screen for between matches (/break), and one-click updates from the control panel.",
-  "zip": "riftcast-0.6.0.zip",
-  "sha256": "76156207f14e2b78ddb245ef711ecc1151a47b16fab07b32a18551389fc742ca",
-  "size": 294053,
-  "date": "2026-11-02"
+  "version": "0.7.0",
+  "notes": "XP tracker for Unleashed (control panel, overlay and players' phones), and a free offline rules search (📖 Rules, or R in the control panel).",
+  "zip": "riftcast-0.7.0.zip",
+  "sha256": "9d58152e668f3b3d3d50a9d02f1d5ce9024a2c703199351ec7393424b88d5f0d",
+  "size": 481121,
+  "date": "2026-11-04"
 }

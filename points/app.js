@@ -3,16 +3,18 @@
 // table code links one phone that keeps both players' scores.
 //
 // Linking: the app and Riftcast meet on a Supabase Realtime broadcast channel named after the code.
-//   app -> stream:  hello {}, ping {}, points { points, kind: 'conquer' | 'hold' | 'minus' | 'reset', who?: 'them' }
+//   app -> stream:  hello {}, ping {}, points { points, kind: 'conquer' | 'hold' | 'minus' | 'reset', who?: 'them' },
+//                   xp { xp, who?: 'them' }
 //   stream -> app:  state { me, them, winPoints, timer, now, event, round, both? }, expired {}
 //   (who: 'them' is only honoured on the table code, whose state carries both: true)
 import { Relay, channelName } from './relay.js'
+import { loadRules, searchHtml } from './rulesearch.js'
 
 const $ = (s) => document.querySelector(s)
 const STORE = 'riftbound-points-v1'
 const CODE_RE = /^[A-HJ-NP-Z2-9]{4,8}$/ // the alphabet Riftcast uses: no 0/O/1/I/L
 
-const defaults = { me: 0, them: 0, meName: '', themName: '', win: 8, flip: true, buzz: true, awake: true, code: null, log: [] }
+const defaults = { me: 0, them: 0, meXp: 0, themXp: 0, xpOn: true, meName: '', themName: '', win: 8, flip: true, buzz: true, awake: true, code: null, log: [] }
 let s = { ...defaults, ...load() }
 if (!Array.isArray(s.log)) s.log = []
 let stream = null // last scoreboard from the stream while linked
@@ -35,6 +37,10 @@ function load() {
 }
 const save = () => localStorage.setItem(STORE, JSON.stringify(s))
 const clampPts = (n) => Math.max(0, Math.min(99, n))
+// Experience (Unleashed): [Level N] abilities are on while you have at least N XP. These are the
+// thresholds cards print most.
+const XP_LEVELS = [3, 6, 11, 16]
+const xpLevel = (xp) => XP_LEVELS.filter((n) => xp >= n).pop() ?? 0
 const linked = () => !!s.code
 // Linked with the table code: this phone keeps both scores.
 const both = () => linked() && !!stream?.both
@@ -65,6 +71,7 @@ function render() {
   setWon('me', s.me >= win)
   setWon('them', them >= win)
   renderAlerts({ me: s.me, them }, { me: meName, them: themName }, win)
+  renderXp()
   // Linked with a player's code, the stream keeps the opponent's score (their own phone or the organiser).
   for (const b of document.querySelectorAll('.zone[data-who="them"]')) b.disabled = themLocked()
   $('#resetBtn').disabled = themLocked()
@@ -87,6 +94,76 @@ function render() {
   $('#themNote').textContent = themNote
   renderClock()
 }
+
+// ---- XP ----
+
+const xpOf = (who) => (who === 'me' ? s.meXp : themLocked() && stream ? stream.them.xp ?? 0 : s.themXp)
+const shownXp = { me: null, them: null }
+
+function renderXp() {
+  document.body.classList.toggle('no-xp', !s.xpOn)
+  for (const who of ['me', 'them']) {
+    const box = $(`#${who}Xp`), xp = xpOf(who), lv = xpLevel(xp)
+    box.querySelector('b').textContent = xp
+    box.querySelector('.lv').textContent = lv ? `Lv ${lv}` : ''
+    box.classList.toggle('has', xp > 0)
+    for (const b of box.querySelectorAll('button')) b.disabled = who === 'them' && themLocked()
+    const before = shownXp[who]
+    shownXp[who] = xp
+    if (before !== null && xp > before && xpLevel(xp) > xpLevel(before) && !calm.matches) {
+      box.classList.remove('level-up')
+      void box.offsetWidth
+      box.classList.add('level-up')
+      if (booted) toast(`★ ${nameOf(who)} reached Level ${lv}: [Level ${lv}] abilities are on`)
+    }
+  }
+}
+
+function setXp(who, to, log = true) {
+  if (who === 'them' && themLocked()) return
+  const from = xpOf(who)
+  to = clampPts(to)
+  if (to === from) return
+  if (log) addLog(who, 'xp', from, to)
+  if (who === 'them') s.themXp = to
+  else s.meXp = to
+  if (linked()) sendXp(who)
+  if (s.buzz) navigator.vibrate?.(to > from ? 15 : [10, 30, 10])
+  save()
+  render()
+}
+
+function sendXp(who) {
+  localTapAt = Date.now()
+  const ok = ch?.send('xp', who === 'them' ? { xp: s.themXp, who } : { xp: s.meXp })
+  if (!ok) pending = true
+}
+
+// Tap +/−; hold to keep counting (Hunt and XP spells can move it several at once).
+document.querySelectorAll('.xp-btn').forEach((b) => {
+  let holdTimer = null, repeatTimer = null, repeated = false
+  const stop = () => {
+    clearTimeout(holdTimer)
+    clearInterval(repeatTimer)
+  }
+  const step = () => setXp(b.dataset.who, xpOf(b.dataset.who) + Number(b.dataset.xp))
+  b.addEventListener('pointerdown', (e) => {
+    if (b.disabled || (e.pointerType === 'mouse' && e.button !== 0)) return
+    repeated = false
+    stop()
+    holdTimer = setTimeout(() => {
+      repeated = true
+      step()
+      repeatTimer = setInterval(step, 180)
+    }, 500)
+  })
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, stop)
+  b.addEventListener('click', () => {
+    if (repeated) repeated = false
+    else step()
+  })
+  b.addEventListener('contextmenu', (e) => e.preventDefault())
+})
 
 // ---- Round clock (from the stream) ----
 
@@ -134,6 +211,8 @@ const KIND = {
   minus: { ico: '−', text: 'Correction' },
   card: { ico: '🃏', text: 'Conquer at the final point: drew a card instead' },
   stream: { ico: '📡', text: 'Updated from the stream' },
+  xp: { ico: '★', text: 'XP' },
+  xpstream: { ico: '📡', text: 'XP updated from the stream' },
   undo: { ico: '↶', text: 'Undo' },
 }
 const nameOf = (who) => (who === 'me' ? (linked() && stream?.me?.name) || s.meName || 'You' : (linked() && stream?.them?.name) || s.themName || 'Opponent')
@@ -154,7 +233,7 @@ function renderLog() {
   $('#tally').innerHTML = ['me', 'them'].map((who) => `<div class="${who}">
     <h3>${esc(nameOf(who))}</h3>
     <div class="big">${who === 'me' ? s.me : them}</div>
-    <div class="split">⚔ ${tally[who].conquer} conquer · 🛡 ${tally[who].hold} hold${tally[who].minus ? ` · −${tally[who].minus} corrected` : ''}</div>
+    <div class="split">⚔ ${tally[who].conquer} conquer · 🛡 ${tally[who].hold} hold${tally[who].minus ? ` · −${tally[who].minus} corrected` : ''}${s.xpOn ? ` · ★ ${xpOf(who)} XP` : ''}</div>
   </div>`).join('')
   const time = (t) => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
   $('#logList').innerHTML = s.log.length
@@ -169,7 +248,7 @@ function undoable() {
   for (let i = s.log.length - 1; i >= 0; i--) {
     const e = s.log[i]
     if (e.kind === 'reset') return null
-    if (['conquer', 'hold', 'minus'].includes(e.kind) && !(themLocked() && e.who === 'them')) return i
+    if (['conquer', 'hold', 'minus', 'xp'].includes(e.kind) && !(themLocked() && e.who === 'them')) return i
   }
   return null
 }
@@ -183,7 +262,8 @@ $('#undoBtn').addEventListener('click', () => {
   if (i === null) return
   const e = s.log[i]
   s.log.splice(i, 1)
-  setScore(e.who, e.from, 'undo', false)
+  if (e.kind === 'xp') setXp(e.who, e.from, false)
+  else setScore(e.who, e.from, 'undo', false)
   renderLog()
 })
 $('#clearLogBtn').addEventListener('click', (ev) => {
@@ -261,6 +341,36 @@ function confetti(side) {
   }
   if (s.buzz) navigator.vibrate?.([40, 60, 40, 60, 120])
 }
+
+// ---- Rulebook search ----
+
+$('#rulesBtn').addEventListener('click', () => {
+  $('#rulesDlg').showModal()
+  $('#rulesIn').focus()
+  loadRules('rules-data.json').catch(() => {}) // start downloading the rulebook
+})
+
+// Free rulebook search, as you type (works offline once loaded).
+let searchTimer = null
+async function renderSearch() {
+  const q = $('#rulesIn').value
+  let html = ''
+  try {
+    const rb = await loadRules('rules-data.json')
+    html = q.trim().length >= 2 ? searchHtml(rb.search(q), q) : ''
+  } catch {
+    html = q.trim() ? '<div class="rb-empty">The rulebook hasn\'t downloaded yet. Connect once and it will work offline after that.</div>' : ''
+  }
+  $('#rbResults').innerHTML = html
+  $('#rbTitle').hidden = !html
+}
+$('#rulesIn').addEventListener('input', () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(renderSearch, 150)
+})
+// Enter doesn't close the sheet; the results update as you type.
+$('#rbResults').addEventListener('click', (e) => e.target.closest('.rb-rule')?.classList.toggle('open'))
+$('#rulesForm').addEventListener('submit', (e) => e.submitter?.value !== 'close' && e.preventDefault())
 
 // ---- Install ----
 
@@ -415,13 +525,18 @@ $('#resetBtn').addEventListener('click', (e) => {
   }
   delete b.dataset.armed
   b.textContent = '↺ Reset'
-  if (s.me || s.them) s.log.push({ t: Date.now(), kind: 'reset' })
+  if (s.me || s.them || s.meXp || s.themXp) s.log.push({ t: Date.now(), kind: 'reset' })
+  const hadXp = { me: s.meXp > 0, them: s.themXp > 0 }
   s.me = 0
   s.them = 0
+  s.meXp = 0
+  if (!themLocked()) s.themXp = 0
   if (both()) {
     sendPoints('me', 'reset')
     sendPoints('them', 'reset')
-  }
+    if (hadXp.me) sendXp('me')
+    if (hadXp.them) sendXp('them')
+  } else if (linked() && hadXp.me) sendXp('me')
   save()
   render()
 })
@@ -440,7 +555,11 @@ function link(code) {
     if (st === 'joined') {
       if (pending) {
         pending = !ch.send('points', { points: s.me, kind: 'sync' })
-        if (stream?.both) pending = !ch.send('points', { points: s.them, kind: 'sync', who: 'them' }) || pending
+        pending = !ch.send('xp', { xp: s.meXp }) || pending
+        if (stream?.both) {
+          pending = !ch.send('points', { points: s.them, kind: 'sync', who: 'them' }) || pending
+          pending = !ch.send('xp', { xp: s.themXp, who: 'them' }) || pending
+        }
       } else ch.send('hello', {})
     }
     render()
@@ -468,6 +587,7 @@ function unlink(announce = true) {
   // Keep counting from where the stream was.
   if (stream) {
     s.them = stream.them.points
+    s.themXp = stream.them.xp ?? s.themXp
     s.themName = stream.them.name || s.themName
   }
   stream = null
@@ -500,6 +620,16 @@ function onMessage(event, p) {
   if (settled && Number.isFinite(p.me.points) && clampPts(p.me.points) !== s.me) {
     if (!first) addLog('me', 'stream', s.me, clampPts(p.me.points))
     s.me = clampPts(p.me.points)
+  }
+  // XP follows the same rules as points.
+  const sx = (v) => (Number.isFinite(v) ? clampPts(v) : null)
+  if (settled && sx(p.me.xp) !== null && sx(p.me.xp) !== s.meXp) {
+    if (!first) addLog('me', 'xpstream', s.meXp, sx(p.me.xp))
+    s.meXp = sx(p.me.xp)
+  }
+  if (p.both && settled && sx(p.them.xp) !== null && sx(p.them.xp) !== s.themXp) {
+    if (!first) addLog('them', 'xpstream', s.themXp, sx(p.them.xp))
+    s.themXp = sx(p.them.xp)
   }
   if (first) toast(p.both ? `Linked: keeping score for ${p.me.name || 'both players'} vs ${p.them.name || ''}`.trim() : `Linked: you are ${p.me.name || 'on stream'}`)
   save()
@@ -548,6 +678,7 @@ $('#menuBtn').addEventListener('click', () => {
   $('#winIn').value = s.win
   $('#flipIn').checked = s.flip
   $('#buzzIn').checked = s.buzz
+  $('#xpIn').checked = s.xpOn
   $('#awakeIn').checked = s.awake
   $('#menuDlg').showModal()
 })
@@ -557,6 +688,7 @@ $('#menuDlg').addEventListener('close', () => {
   s.win = Math.max(1, Math.min(30, Math.round(Number($('#winIn').value)) || 8))
   s.flip = $('#flipIn').checked
   s.buzz = $('#buzzIn').checked
+  s.xpOn = $('#xpIn').checked
   s.awake = $('#awakeIn').checked
   save()
   keepAwake()
